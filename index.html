@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sruz-Raider</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-image: url('https://cdn.discordapp.com/attachments/1379153981544333375/1379546528389267628/IMG5008.jpg?ex=6840a253&is=683f50d3&hm=4b726dc640d8900224277a6539b9b52e609ecf104e318219546abfc0e920fa69&');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 画面上部に寄せる */
+            min-height: 100vh;
+            padding: 20px; /* 全体のパディングを追加 */
+            box-sizing: border-box;
+        }
+        .overlay {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            max-width: 800px; /* 最大幅を広くする */
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 20px; /* 上部の余白 */
+            margin-bottom: 20px; /* 下部の余白 */
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #00bfff;
+            text-align: center;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #c0c0c0;
+        }
+        input[type="text"],
+        textarea,
+        select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #333;
+            color: #eee;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .slider-group {
+            margin-bottom: 20px;
+        }
+        .slider-group label {
+            margin-bottom: 5px;
+        }
+        .slider-group input[type="range"] {
+            width: calc(100% - 20px);
+            margin-top: 5px;
+            -webkit-appearance: none;
+            height: 8px;
+            background: #555;
+            border-radius: 5px;
+            outline: none;
+        }
+        .slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00bfff;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+        .checkbox-group {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* ボタンが多すぎる場合に折り返す */
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            flex-grow: 1; /* flex item が均等に幅を取る */
+            min-width: 180px; /* ボタンの最小幅 */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button#stopButton {
+            background-color: #dc3545;
+        }
+        button#stopButton:hover {
+            background-color: #c82333;
+        }
+        #status {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #222;
+            color: #eee;
+            border: 1px solid #444;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #28a745;
+            color: white;
+        }
+        .error {
+            background-color: #dc3545;
+            color: white;
+        }
+        .rate-limited {
+            background-color: #ffc107;
+            color: #343a40;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay">
+        <div class="container">
+            <h1>Sruz-Raider</h1>
+
+            <label for="tokenInput">Discordトークン:</label>
+            <textarea id="tokenInput" placeholder="Discordトークンを改行区切りで入力"></textarea>
+
+            <label for="channelIdInput">チャンネルID:</label>
+            <textarea id="channelIdInput" placeholder="メッセージを送信するチャンネルIDを改行区切りで入力"></textarea>
+
+            <hr>
+            <h2>メッセージ送信設定</h2>
+            <label for="messageInput">メッセージ:</label>
+            <textarea id="messageInput" placeholder="送信するメッセージを入力"></textarea>
+
+            <div class="slider-group">
+                <label for="speedSlider">送信速度 (間隔: <span id="speedValue">1000</span> ms) - 右にすると速くなります</label>
+                <input type="range" id="speedSlider" min="100" max="10000" value="1000" oninput="document.getElementById('speedValue').textContent=this.value">
+            </div>
+
+            <div class="slider-group">
+                <label for="countSlider">送信メッセージ数 (メッセージ送信・スレッド作成): <span id="countValue">1</span></label>
+                <input type="range" id="countSlider" min="1" max="50" value="1" oninput="document.getElementById('countValue').textContent=this.value">
+            </div>
+
+            <div class="slider-group">
+                <label for="mentionCountSlider">ランダムメンションユーザー数: <span id="mentionCountValue">0</span></label>
+                <input type="range" id="mentionCountSlider" min="0" max="10" value="0" oninput="document.getElementById('mentionCountValue').textContent=this.value">
+            </div>
+
+            <label for="mentionIdsInput">ランダムメンション用ユーザーID (カンマ区切り):</label>
+            <input type="text" id="mentionIdsInput" placeholder="例: 123456789012345678,987654321098765432">
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="addRandomStringCheckbox" onchange="toggleRandomStringSlider()">
+                <label for="addRandomStringCheckbox">メッセージにランダムな文字列を追加</label>
+            </div>
+
+            <div class="slider-group" id="randomStringLengthGroup" style="display: none;">
+                <label for="randomStringLengthSlider">ランダム文字列の長さ: <span id="randomStringLengthValue">5</span></label>
+                <input type="range" id="randomStringLengthSlider" min="1" max="20" value="5" oninput="document.getElementById('randomStringLengthValue').textContent=this.value">
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="enableReplyCheckbox" onchange="toggleReplyInput()">
+                <label for="enableReplyCheckbox">指定メッセージに返信する</label>
+            </div>
+            <div id="replyToMessageGroup" style="display: none;">
+                <label for="replyToMessageIdInput">返信するメッセージID:</label>
+                <input type="text" id="replyToMessageIdInput" placeholder="返信先のメッセージIDを入力">
+            </div>
+
+            <hr>
+            <h2>スレッド作成設定</h2>
+            <div class="checkbox-group">
+                <input type="checkbox" id="enableThreadCheckbox" onchange="toggleThreadOptions()">
+                <label for="enableThreadCheckbox">スレッドを作成する</label>
+            </div>
+            <div id="threadOptionsGroup" style="display: none;">
+                <label for="threadNameInput">スレッド名:</label>
+                <input type="text" id="threadNameInput" placeholder="例: 今日の雑談">
+                <label for="threadTypeSelect">スレッドタイプ:</label>
+                <select id="threadTypeSelect">
+                    <option value="public_thread">パブリックスレッド</option>
+                    <option value="private_thread">プライベートスレッド (Nitroユーザーのみ)</option>
+                </select>
+            </div>
+
+            <hr>
+            <h2>リアクション追加設定</h2>
+            <div class="checkbox-group">
+                <input type="checkbox" id="enableReactionCheckbox" onchange="toggleReactionOptions()">
+                <label for="enableReactionCheckbox">指定チャンネルの**既存メッセージ**にリアクションを追加する</label>
+            </div>
+            <div id="reactionOptionsGroup" style="display: none;">
+                <label for="reactionEmojisInput">リアクション絵文字 (区切りなし):</label>
+                <input type="text" id="reactionEmojisInput" placeholder="例: 😂👍❤️ (カスタム絵文字は名前:ID形式)">
+                <div class="slider-group">
+                    <label for="reactionMessageCountSlider">リアクションを付けるメッセージ数 (最新から過去へ): <span id="reactionMessageCountValue">1</span></label>
+                    <input type="range" id="reactionMessageCountSlider" min="1" max="50" value="1" oninput="document.getElementById('reactionMessageCountValue').textContent=this.value">
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="button-group">
+                <button onclick="startSending('message')">メッセージ送信を開始</button>
+                <button onclick="startSending('thread')">スレッド作成を開始</button>
+                <button onclick="startSending('reaction')">リアクション追加を開始</button>
+                <button id="stopButton" onclick="stopSending()" disabled>全ての操作を停止</button>
+            </div>
+
+            <div id="status">ここに送信ステータスが表示されます。</div>
+        </div>
+    </div>
+
+    <script>
+        let isSending = false;
+        let stopRequested = false;
+        let currentOperation = null; // 'message', 'thread', 'reaction'
+
+        const allEmojis = [
+            '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+            '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🥺', '😤', '😠',
+            '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😢', '😭', '🤥', '🤫', '🤭', '🤐', '🤔', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '🥳', '😎', '🤓', '🧐', '🤯', '🤫', '🤔', '🤥', '😶', '😐', '😑', '😬', '🙄',
+            '😤', '😠', '😡', '🤬', '😈', '👿', '💀', '☠️', '💩', '🤡', '👹', '👺', '👻', '👽', '👾', '🤖', '😺', '😸', '😹', '😻',
+            '😼', '😽', '🙀', '😿', '😾', '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤙', '🤘', '🤟', '👏', '🙌', '👐',
+            '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦵', '🦶', '👂', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️', '👅', '👄',
+            '💋', '🩸', '🦠', '🩻', '💉', '💊', '🩹', '🩼', '🩱', '🩲', '🩳', '🩴', '👙', '👚', '👕', '👖', '👟', '👞', '👠', '👡',
+            '👢', '🥿', '🩰', '🎩', '👑', '👒', '🎓', '🧢', '🎗️', '🎽', '🧣', '🧤', '🧥', '🧦', '👗', '👘', '🥻', '🩱', '🩲', '🩳',
+            '🩴', '👙', '💼', '🎒', '👜', '👛', '👝', '🛍️', '🛒', '🎁', '🎀', '🎈', '🎉', '🎊', '🎋', '🎍', '🎎', '🎏', '🎐', '🎑',
+            '🧧', '🎇', '🎆', '✨', '💫', '🌟', '⚡', '🔥', '💥', '☄️', '☀️', '🌞', '🌛', '🌜', '🌑', '🌓', '🌔', '🌕', '🌖',
+            '🌗', '🌘', '🌙', '🌎', '🌍', '🌏', '🌐', '🗺️', '🗾', '🧭', '🏔️', '⛰️', '🌋', '🗻', '🏕️', '🏖️', '🏜️', '🏝️', '🏞️', '🛣️',
+            '🛤️', '🌉', '🌃', '🌌', '🌠', '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🏍️', '🛵', '🚲', '🛴',
+            '🚓', '🚑', '🚒', '🚐', '🚚', '🚛', '🚢', '🛥️', '🚤',
+            '🛶', '⛵', '🛳️', '✈️', '🚁', '🚂', '🚃', '🚄', '🚅', '🚆',
+            '🚇', '🚈', '🚉', '🚊', '🚝', '🚠', '🚡', '🚟', '🚥', '🚦',
+            '🚧', '🚨', '🏭', '🏛️', '🏤', '🏥', '🏦', '🏨', '🏩',
+            '🏪', '🏫', '🏬', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌',
+            '🕍', '🕋', '⛩️', '🎌', '⛲', '⛺', '🌁', '🌃', '✨', '☁️', '🌤️', '⛈️', '🌈', '🌉', '🌋', '🌌',
+            '🌊', '🐈', '🐕', '🐁', '🐹', '🐇', '🦊', '🐻', '🐼', '🐨', '🐅', '🦁', '🐄', '🐖', '🐗',
+            '🐒', '🦍', ' orangutan', '🐔', '🐧', '🐦', '🐥', '🐣', '🦅', '🦆', '🦢',
+            '🦉', '🦇', '🐺', '🐗', '🐎', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟',
+            '🦗', '🕷️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞',
+            '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🦈', '🐊', '🐆', '🦓', '🦘',
+            '🦡', '🦦', '🦔', '🦨', '🦝', '🦙', '🦛', '🦜', '🦚', '🦩', '🦥', '🦧',
+            '🦨', '🦡', '🦦', '🦔', '🦨', '🦝', '🦙', '🦛', '🦜', '🦚', '🦩', '🦥', '🦧'
+        ];
+
+        function generateRandomString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        function getRandomEmoji() {
+            return allEmojis[Math.floor(Math.random() * allEmojis.length)];
+        }
+
+        function toggleRandomStringSlider() {
+            const checkbox = document.getElementById('addRandomStringCheckbox');
+            const sliderGroup = document.getElementById('randomStringLengthGroup');
+            if (checkbox.checked) {
+                sliderGroup.style.display = 'block';
+            } else {
+                sliderGroup.style.display = 'none';
+            }
+        }
+
+        function toggleReplyInput() {
+            const checkbox = document.getElementById('enableReplyCheckbox');
+            const replyGroup = document.getElementById('replyToMessageGroup');
+            if (checkbox.checked) {
+                replyGroup.style.display = 'block';
+            } else {
+                replyGroup.style.display = 'none';
+            }
+        }
+
+        function toggleThreadOptions() {
+            const checkbox = document.getElementById('enableThreadCheckbox');
+            const threadGroup = document.getElementById('threadOptionsGroup');
+            if (checkbox.checked) {
+                threadGroup.style.display = 'block';
+            } else {
+                threadGroup.style.display = 'none';
+            }
+        }
+
+        function toggleReactionOptions() {
+            const checkbox = document.getElementById('enableReactionCheckbox');
+            const reactionGroup = document.getElementById('reactionOptionsGroup');
+            if (checkbox.checked) {
+                reactionGroup.style.display = 'block';
+            } else {
+                reactionGroup.style.display = 'none';
+            }
+        }
+
+        function stopSending() {
+            stopRequested = true;
+            document.getElementById('status').textContent += "\n\n--- 操作停止リクエストを受信しました。現在の処理が完了次第停止します。 ---";
+            document.querySelectorAll('.button-group button').forEach(button => {
+                if (button.id !== 'stopButton') {
+                    button.disabled = false;
+                }
+            });
+            document.getElementById('stopButton').disabled = true;
+        }
+
+        async function startSending(operationType) {
+            if (isSending) {
+                alert("すでに操作中です。");
+                return;
+            }
+
+            currentOperation = operationType;
+            const tokensRaw = document.getElementById('tokenInput').value;
+            const channelIdsRaw = document.getElementById('channelIdInput').value;
+            const speedSliderValue = parseInt(document.getElementById('speedSlider').value, 10);
+            const sendInterval = 10100 - speedSliderValue; // Ensures a minimum interval and inverse relationship (10000ms is slow, 100ms is fast)
+
+            const tokens = tokensRaw.split('\n').map(t => t.trim()).filter(t => t.length > 0);
+            const channelIds = channelIdsRaw.split('\n').map(id => id.trim()).filter(id => id.length > 0);
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = ''; // Clear previous status
+
+            if (tokens.length === 0) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = 'エラー: Discordトークンを入力してください。';
+                return;
+            }
+            if (channelIds.length === 0) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = 'エラー: チャンネルIDを入力してください。';
+                return;
+            }
+
+            isSending = true;
+            stopRequested = false;
+            statusDiv.className = '';
+            statusDiv.textContent = '操作を開始します...';
+            document.querySelectorAll('.button-group button').forEach(button => {
+                button.disabled = true;
+            });
+            document.getElementById('stopButton').disabled = false;
+
+            let successfulActions = 0;
+            let failedActions = 0;
+            let rateLimitedCount = 0;
+            let currentTokenIndex = 0;
+
+            const loopCount = (operationType === 'reaction') ? 1 : parseInt(document.getElementById('countSlider').value, 10); // リアクションはチャンネルごとに指定数処理するため、ループ回数は1回
+
+            for (let i = 0; i < loopCount; i++) {
+                if (stopRequested) {
+                    statusDiv.textContent += `\n\n--- 操作停止リクエストを受信しました ---\n合計試行数: ${successfulActions + failedActions}\n成功: ${successfulActions}\n失敗: ${failedActions}\nレートリミット遭遇: ${rateLimitedCount}`;
+                    break;
+                }
+
+                const currentToken = tokens[currentTokenIndex];
+
+                for (const channelId of channelIds) {
+                    if (stopRequested) {
+                        statusDiv.textContent += `\n\n--- 操作停止リクエストを受信しました ---\n合計試行数: ${successfulActions + failedActions}\n成功: ${successfulActions}\n失敗: ${failedActions}\nレートリミット遭遇: ${rateLimitedCount}`;
+                        break;
+                    }
+
+                    // メッセージ送信
+                    if (operationType === 'message') {
+                        let baseMessage = document.getElementById('messageInput').value.trim();
+                        if (!baseMessage) {
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = 'エラー: 送信するメッセージが入力されていません。';
+                            isSending = false;
+                            document.querySelectorAll('.button-group button').forEach(button => {
+                                if (button.id !== 'stopButton') {
+                                    button.disabled = false;
+                                }
+                            });
+                            document.getElementById('stopButton').disabled = true;
+                            return;
+                        }
+
+                        const mentionCount = parseInt(document.getElementById('mentionCountSlider').value, 10);
+                        const mentionIdsRaw = document.getElementById('mentionIdsInput').value;
+                        const mentionIds = mentionIdsRaw.split(',').map(id => id.trim()).filter(id => id.length > 0);
+                        const addRandomString = document.getElementById('addRandomStringCheckbox').checked;
+                        const randomStringLength = parseInt(document.getElementById('randomStringLengthSlider').value, 10);
+                        const enableReply = document.getElementById('enableReplyCheckbox').checked;
+                        const replyToMessageId = document.getElementById('replyToMessageIdInput').value.trim();
+
+                        let payload = {
+                            "content": baseMessage,
+                            "tts": false
+                        };
+
+                        if (mentionIds.length > 0 && mentionCount > 0) {
+                            const shuffledMentionIds = [...mentionIds].sort(() => 0.5 - Math.random());
+                            const selectedMentions = shuffledMentionIds.slice(0, Math.min(mentionCount, mentionIds.length));
+                            if (selectedMentions.length > 0) {
+                                payload.content += ` ${selectedMentions.map(id => `<@${id}>`).join(' ')}`;
+                            }
+                        }
+
+                        if (addRandomString) {
+                            payload.content += ` ${generateRandomString(randomStringLength)}`;
+                        }
+
+                        payload.content += ` ${getRandomEmoji()}`;
+
+                        if (enableReply && replyToMessageId.length > 0) {
+                            payload.message_reference = {
+                                "channel_id": channelId,
+                                "message_id": replyToMessageId,
+                            };
+                            payload.allowed_mentions = {
+                                "parse": ["users", "roles", "everyone"],
+                                "replied_user": true
+                            };
+                        } else if (enableReply && replyToMessageId.length === 0) {
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = 'エラー: 返信を有効にする場合、返信するメッセージIDを入力してください。';
+                            isSending = false;
+                            document.querySelectorAll('.button-group button').forEach(button => {
+                                if (button.id !== 'stopButton') {
+                                    button.disabled = false;
+                                }
+                            });
+                            document.getElementById('stopButton').disabled = true;
+                            return;
+                        }
+
+                        const headers = {
+                            "Authorization": currentToken,
+                            "Content-Type": "application/json",
+                        };
+
+                        try {
+                            statusDiv.textContent = `[${new Date().toLocaleTimeString()}] (${i + 1}/${loopCount}) チャンネル ${channelId} にメッセージ送信を試行中... (トークン: ${currentTokenIndex + 1}/${tokens.length})`;
+                            statusDiv.className = '';
+
+                            const response = await fetch(`https://discord.com/api/v9/channels/${channelId}/messages`, {
+                                method: 'POST',
+                                headers: headers,
+                                body: JSON.stringify(payload)
+                            });
+
+                            const responseText = await response.text();
+                            let responseJson;
+                            try {
+                                responseJson = JSON.parse(responseText);
+                            } catch (e) {
+                                responseJson = { message: responseText || "No JSON response" };
+                            }
+
+                            if (response.ok) {
+                                successfulActions++;
+                                statusDiv.className = 'success';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [+] (${i + 1}/${loopCount}) チャンネル ${channelId} にメッセージを送信しました。(トークン: ${currentTokenIndex + 1}/${tokens.length})\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            } else if (response.status === 429) {
+                                rateLimitedCount++;
+                                const retryAfter = response.headers.get('Retry-After');
+                                statusDiv.className = 'rate-limited';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [!] (${i + 1}/${loopCount}) チャンネル ${channelId} でメッセージ送信のレートリミットに達しました。(トークン: ${currentTokenIndex + 1}/${tokens.length}) ${retryAfter ? retryAfter + '秒後に再試行します。' : ''}\nエラー詳細: ${JSON.stringify(responseJson, null, 2)}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                if (retryAfter) {
+                                    await new Promise(resolve => setTimeout(resolve, parseInt(retryAfter, 10) * 1000 + 100));
+                                }
+                            } else {
+                                failedActions++;
+                                statusDiv.className = 'error';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] (${i + 1}/${loopCount}) チャンネル ${channelId} へのメッセージ送信に失敗しました。\nステータス: ${response.status}\nエラー詳細: ${JSON.stringify(responseJson, null, 2)}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            }
+                        } catch (error) {
+                            failedActions++;
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] (${i + 1}/${loopCount}) ネットワークエラーまたは予期せぬエラーが発生しました: ${error.message}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            console.error("Fetch error:", error);
+                        }
+                        await new Promise(resolve => setTimeout(resolve, sendInterval));
+                    }
+                    // スレッド作成
+                    else if (operationType === 'thread') {
+                        const threadName = document.getElementById('threadNameInput').value.trim();
+                        const threadType = document.getElementById('threadTypeSelect').value;
+
+                        if (!threadName) {
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = 'エラー: スレッドを作成する場合、スレッド名を入力してください。';
+                            isSending = false;
+                            document.querySelectorAll('.button-group button').forEach(button => {
+                                if (button.id !== 'stopButton') {
+                                    button.disabled = false;
+                                }
+                            });
+                            document.getElementById('stopButton').disabled = true;
+                            return;
+                        }
+
+                        const threadPayload = {
+                            "name": threadName,
+                            "type": threadType === 'public_thread' ? 11 : 12, // 11 for public, 12 for private
+                            "auto_archive_duration": 60 // 60 minutes
+                        };
+
+                        const headers = {
+                            "Authorization": currentToken,
+                            "Content-Type": "application/json",
+                        };
+
+                        try {
+                            statusDiv.textContent = `[${new Date().toLocaleTimeString()}] (${i + 1}/${loopCount}) チャンネル ${channelId} にスレッドを作成中... (トークン: ${currentTokenIndex + 1}/${tokens.length})`;
+                            statusDiv.className = '';
+
+                            const response = await fetch(`https://discord.com/api/v9/channels/${channelId}/threads`, {
+                                method: 'POST',
+                                headers: headers,
+                                body: JSON.stringify(threadPayload)
+                            });
+
+                            const responseText = await response.text();
+                            let responseJson;
+                            try {
+                                responseJson = JSON.parse(responseText);
+                            } catch (e) {
+                                responseJson = { message: responseText || "No JSON response" };
+                            }
+
+                            if (response.ok) {
+                                successfulActions++;
+                                statusDiv.className = 'success';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [+] (${i + 1}/${loopCount}) チャンネル ${channelId} にスレッド "${threadName}" を作成しました。(トークン: ${currentTokenIndex + 1}/${tokens.length})\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            } else if (response.status === 429) {
+                                rateLimitedCount++;
+                                const retryAfter = response.headers.get('Retry-After');
+                                statusDiv.className = 'rate-limited';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [!] (${i + 1}/${loopCount}) チャンネル ${channelId} でスレッド作成のレートリミットに達しました。(トークン: ${currentTokenIndex + 1}/${tokens.length}) ${retryAfter ? retryAfter + '秒後に再試行します。' : ''}\nエラー詳細: ${JSON.stringify(responseJson, null, 2)}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                if (retryAfter) {
+                                    await new Promise(resolve => setTimeout(resolve, parseInt(retryAfter, 10) * 1000 + 100));
+                                }
+                            } else {
+                                failedActions++;
+                                statusDiv.className = 'error';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] (${i + 1}/${loopCount}) チャンネル ${channelId} でのスレッド作成に失敗しました。\nステータス: ${response.status}\nエラー詳細: ${JSON.stringify(responseJson, null, 2)}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            }
+                        } catch (error) {
+                            failedActions++;
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] (${i + 1}/${loopCount}) ネットワークエラーまたは予期せぬエラーが発生しました: ${error.message}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            console.error("Thread creation error:", error);
+                        }
+                        await new Promise(resolve => setTimeout(resolve, sendInterval));
+                    }
+                    // リアクション追加 (既存メッセージに対して)
+                    else if (operationType === 'reaction') {
+                        const reactionEmojisRaw = document.getElementById('reactionEmojisInput').value.trim();
+                        const reactionEmojis = [...reactionEmojisRaw].map(char => {
+                            // 絵文字がカスタム絵文字（例: custom_emoji:123456789）の場合の処理
+                            const customEmojiMatch = char.match(/<:(\w+):(\d+)>/);
+                            if (customEmojiMatch) {
+                                return `${customEmojiMatch[1]}:${customEmojiMatch[2]}`; // 名前:ID の形式
+                            }
+                            // Unicode 絵文字の場合
+                            return encodeURIComponent(char);
+                        });
+
+                        const reactionMessageCount = parseInt(document.getElementById('reactionMessageCountSlider').value, 10);
+
+                        if (reactionEmojis.length === 0) {
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = 'エラー: リアクションを追加する場合、絵文字を入力してください。';
+                            isSending = false;
+                            document.querySelectorAll('.button-group button').forEach(button => {
+                                if (button.id !== 'stopButton') {
+                                    button.disabled = false;
+                                }
+                            });
+                            document.getElementById('stopButton').disabled = true;
+                            return;
+                        }
+
+                        // チャンネルのメッセージを取得 (指定された数だけ)
+                        let messagesToReact = [];
+                        try {
+                            statusDiv.textContent = `[${new Date().toLocaleTimeString()}] チャンネル ${channelId} から最新の ${reactionMessageCount} 件のメッセージを取得中... (トークン: ${currentTokenIndex + 1}/${tokens.length})`;
+                            statusDiv.className = '';
+
+                            const messageResponse = await fetch(`https://discord.com/api/v9/channels/${channelId}/messages?limit=${reactionMessageCount}`, {
+                                headers: { "Authorization": currentToken }
+                            });
+                            const messages = await messageResponse.json();
+
+                            if (messageResponse.ok && messages.length > 0) {
+                                messagesToReact = messages;
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] チャンネル ${channelId} から ${messages.length} 件のメッセージを取得しました。`;
+                            } else {
+                                failedActions++;
+                                statusDiv.className = 'error';
+                                statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] チャンネル ${channelId} からメッセージの取得に失敗しました。\nステータス: ${messageResponse.status}\nエラー詳細: ${JSON.stringify(messages, null, 2)}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                await new Promise(resolve => setTimeout(resolve, sendInterval));
+                                continue; // 次のチャンネルへ
+                            }
+                        } catch (error) {
+                            failedActions++;
+                            statusDiv.className = 'error';
+                            statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] チャンネル ${channelId} のメッセージ取得中にネットワークエラーが発生しました: ${error.message}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                            console.error("Fetch messages for reaction error:", error);
+                            await new Promise(resolve => setTimeout(resolve, sendInterval));
+                            continue; // 次のチャンネルへ
+                        }
+
+                        // 各メッセージにリアクションを追加
+                        for (const message of messagesToReact) {
+                            if (stopRequested) break;
+                            const messageIdToReact = message.id;
+
+                            for (const emoji of reactionEmojis) {
+                                if (stopRequested) break;
+
+                                const headers = {
+                                    "Authorization": currentToken,
+                                };
+
+                                try {
+                                    statusDiv.textContent = `[${new Date().toLocaleTimeString()}] チャンネル ${channelId} のメッセージ ${messageIdToReact} にリアクション ${decodeURIComponent(emoji)} を追加中... (トークン: ${currentTokenIndex + 1}/${tokens.length})`;
+                                    statusDiv.className = '';
+
+                                    const response = await fetch(`https://discord.com/api/v9/channels/${channelId}/messages/${messageIdToReact}/reactions/${emoji}/@me`, {
+                                        method: 'PUT',
+                                        headers: headers
+                                    });
+
+                                    if (response.status === 204) {
+                                        successfulActions++;
+                                        statusDiv.className = 'success';
+                                        statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [+] チャンネル ${channelId} のメッセージ ${messageIdToReact} にリアクション ${decodeURIComponent(emoji)} を追加しました。(トークン: ${currentTokenIndex + 1}/${tokens.length})\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                    } else if (response.status === 429) {
+                                        rateLimitedCount++;
+                                        const retryAfter = response.headers.get('Retry-After');
+                                        statusDiv.className = 'rate-limited';
+                                        statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [!] チャンネル ${channelId} のメッセージ ${messageIdToReact} でリアクション追加のレートリミットに達しました。(トークン: ${currentTokenIndex + 1}/${tokens.length}) ${retryAfter ? retryAfter + '秒後に再試行します。' : ''}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                        if (retryAfter) {
+                                            await new Promise(resolve => setTimeout(resolve, parseInt(retryAfter, 10) * 1000 + 100));
+                                        }
+                                    } else {
+                                        failedActions++;
+                                        const responseText = await response.text();
+                                        let responseJson;
+                                        try {
+                                            responseJson = JSON.parse(responseText);
+                                        } catch (e) {
+                                            responseJson = { message: responseText || "No JSON response" };
+                                        }
+                                        statusDiv.className = 'error';
+                                        statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] チャンネル ${channelId} のメッセージ ${messageIdToReact} へのリアクション ${decodeURIComponent(emoji)} 追加に失敗しました。\nステータス: ${response.status}\nエラー詳細: ${JSON.stringify(responseJson, null, 2)}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                    }
+                                } catch (error) {
+                                    failedActions++;
+                                    statusDiv.className = 'error';
+                                    statusDiv.textContent = `[${new Date().toLocaleTimeString()}] [-] ネットワークエラーまたは予期せぬエラーが発生しました: ${error.message}\n成功: ${successfulActions}, 失敗: ${failedActions}, レートリミット: ${rateLimitedCount}`;
+                                    console.error("Reaction add error:", error);
+                                }
+                                await new Promise(resolve => setTimeout(resolve, sendInterval));
+                            }
+                        }
+                    }
+                }
+                currentTokenIndex = (currentTokenIndex + 1) % tokens.length;
+            }
+
+            if (!stopRequested) {
+                statusDiv.textContent += `\n\n--- 操作完了 ---\n成功: ${successfulActions}\n失敗: ${failedActions}\nレートリミット遭遇: ${rateLimitedCount}`;
+            }
+
+            isSending = false;
+            document.querySelectorAll('.button-group button').forEach(button => {
+                if (button.id !== 'stopButton') {
+                    button.disabled = false;
+                }
+            });
+            document.getElementById('stopButton').disabled = true;
+            currentOperation = null;
+        }
+    </script>
+</body>
+</html>
