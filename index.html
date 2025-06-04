@@ -166,12 +166,12 @@
 
             <div class="slider-group">
                 <label for="speedSlider">送信速度 (間隔: <span id="speedValue">1000</span> ms) - 右にすると速くなります</label>
-                <input type="range" id="speedSlider" min="100" max="10000" value="1000" oninput="document.getElementById('speedValue').textContent=this.value">
+                <input type="range" id="speedSlider" min="10" max="5000" value="1000" oninput="document.getElementById('speedValue').textContent=this.value">
             </div>
 
             <div class="slider-group">
-                <label for="countSlider">送信メッセージ数 (メッセージ送信・スレッド作成): <span id="countValue">1</span></label>
-                <input type="range" id="countSlider" min="1" max="50" value="1" oninput="document.getElementById('countValue').textContent=this.value">
+                <label for="countSlider">送信メッセージ数・スレッド作成数: <span id="countValue">1</span></label>
+                <input type="range" id="countSlider" min="1" max="500" value="1" oninput="document.getElementById('countValue').textContent=this.value">
             </div>
 
             <div class="slider-group">
@@ -228,7 +228,7 @@
                 <input type="text" id="reactionEmojisInput" placeholder="例: 😂👍❤️ (カスタム絵文字は名前:ID形式)">
                 <div class="slider-group">
                     <label for="reactionMessageCountSlider">リアクションを付けるメッセージ数 (最新から過去へ): <span id="reactionMessageCountValue">1</span></label>
-                    <input type="range" id="reactionMessageCountSlider" min="1" max="50" value="1" oninput="document.getElementById('reactionMessageCountValue').textContent=this.value">
+                    <input type="range" id="reactionMessageCountSlider" min="1" max="500" value="1" oninput="document.getElementById('reactionMessageCountValue').textContent=this.value">
                 </div>
             </div>
 
@@ -352,7 +352,7 @@
             const tokensRaw = document.getElementById('tokenInput').value;
             const channelIdsRaw = document.getElementById('channelIdInput').value;
             const speedSliderValue = parseInt(document.getElementById('speedSlider').value, 10);
-            const sendInterval = 10100 - speedSliderValue; // Ensures a minimum interval and inverse relationship (10000ms is slow, 100ms is fast)
+            const sendInterval = speedSliderValue; // スライダー値がそのまま間隔（ms）になる
 
             const tokens = tokensRaw.split('\n').map(t => t.trim()).filter(t => t.length > 0);
             const channelIds = channelIdsRaw.split('\n').map(id => id.trim()).filter(id => id.length > 0);
